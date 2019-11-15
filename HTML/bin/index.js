@@ -12,7 +12,7 @@ if (args.length >= 2) {
   help()
 }
 
-function help () {
+function help() {
   var help = [
     'Usage: html-pdf <source> <destination>',
     'e.g.: html-pdf source.html destination.pdf'
@@ -21,10 +21,11 @@ function help () {
   console.log(help)
 }
 
-function htmlpdf (source, destination) {
+function htmlpdf(source, destination) {
   var html = fs.readFileSync(source, 'utf8')
   var options = {
-    base: 'file://' + path.resolve(source)
+    base: 'file://' + path.resolve(source),
+    phantomArgs: ['--local-url-access=false']
   }
   pdf.create(html, options).toFile(destination, function (err, res) {
     if (err) throw err
