@@ -1,5 +1,5 @@
 {
-  "name": "html-pdf",
+  "name": "html-pdf-gl",
   "version": "2.2.0",
   "description": "HTML to PDF converter that uses phantomjs",
   "engines": {
