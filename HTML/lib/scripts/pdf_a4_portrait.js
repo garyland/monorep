@@ -3,7 +3,7 @@ var system = require('system')
 var webpage = require('webpage')
 
 // Error handler
-function exit (error) {
+function exit(error) {
   var message
   if (typeof error === 'string') message = error
   if (error) system.stderr.write('html-pdf: ' + (message || 'Unknown Error ' + error) + '\n')
@@ -11,7 +11,7 @@ function exit (error) {
 }
 
 // Build stack to print
-function buildStack (msg, trace) {
+function buildStack(msg, trace) {
   var msgStack = [msg]
   if (trace && trace.length) {
     msgStack.push('Stack:')
@@ -51,7 +51,7 @@ page.onLoadFinished = function () {
   renderTimeout = setTimeout(renderNow, Math.floor(options.renderDelay) || 0)
 }
 
-function renderNow () {
+function renderNow() {
   if (rendered) return
   rendered = true
   clearTimeout(renderTimeout)
@@ -66,7 +66,7 @@ function renderNow () {
   page.render(filename, fileOptions)
 
   // Output to parent process
-  system.stdout.write(JSON.stringify({filename: filename}))
+  system.stdout.write(JSON.stringify({ filename: filename }))
   exit(null)
 }
 
@@ -93,9 +93,9 @@ setTimeout(function () {
 
 // Returns a hash of HTML content
 // ------------------------------
-function getContent (page) {
+function getContent(page) {
   return page.evaluate(function () {
-    function getElements (doc, wildcard) {
+    function getElements(doc, wildcard) {
       var wildcardMatcher = new RegExp(wildcard + '(.*)')
       var hasElements = false
       var elements = {}
@@ -116,7 +116,7 @@ function getContent (page) {
       if (hasElements) return elements
     }
 
-    function getElement (doc, id) {
+    function getElement(doc, id) {
       var $elem = doc.getElementById(id)
       if ($elem) {
         var html = $elem.outerHTML
@@ -164,13 +164,13 @@ function getContent (page) {
 
 // Creates page section
 // --------------------
-function createSection (section, content, options) {
+function createSection(section, content, options) {
   options = options[section] || {}
   var c = content[section] || {}
   var o = options.contents
   var paginationOffset = Math.floor(options.paginationOffset) || 0
 
-  if (typeof o !== 'object') o = {default: o}
+  if (typeof o !== 'object') o = { default: o }
 
   return {
     height: options.height,
@@ -191,8 +191,8 @@ function createSection (section, content, options) {
 
 // Creates paper with specified options
 // ------------------------------------
-function definePaperOrientation (options) {
-  var paper = {border: options.border || '0'}
+function definePaperOrientation(options) {
+  var paper = { border: options.border || '0' }
 
   if (options.height && options.width) {
     paper.width = options.width
@@ -207,7 +207,7 @@ function definePaperOrientation (options) {
 
 // Creates paper with generated footer & header
 // --------------------------------------------
-function definePaperSize (content, options) {
+function definePaperSize(content, options) {
   var paper = definePaperOrientation(options)
 
   if (options.header || content.header) {
@@ -218,8 +218,8 @@ function definePaperSize (content, options) {
     paper.footer = createSection('footer', content, options)
   }
 
-  if (paper.header && paper.header.height === undefined) paper.header.height = '46mm'
-  if (paper.footer && paper.footer.height === undefined) paper.footer.height = '28mm'
+  if (paper.header && paper.header.height === undefined) paper.header.height = '0'
+  if (paper.footer && paper.footer.height === undefined) paper.footer.height = '0'
 
   return paper
 }
