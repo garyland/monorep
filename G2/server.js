@@ -3,36 +3,38 @@ const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 
-function pick(obj, arrToPick) {
-    if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
-        console.error('Invalid first parameter');
-        process.exit(1);
-    }
+// function pick(obj, arrToPick) {
+//     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
+//         console.error('Invalid first parameter');
+//         process.exit(1);
+//     }
     
-    if (!Array.isArray(arrToPick) || arrToPick.length === 0) {
-        return obj;
-    }
+//     if (!Array.isArray(arrToPick) || arrToPick.length === 0) {
+//         return obj;
+//     }
     
-    const objPickedOptions = Object.keys(obj).reduce((objResult, strKey) => {
-        if (!arrToPick.includes(strKey)) {
-            return objResult;
-        }
+//     const objPickedOptions = Object.keys(obj).reduce((objResult, strKey) => {
+//         if (!arrToPick.includes(strKey)) {
+//             return objResult;
+//         }
     
-        objResult[strKey] = obj[strKey];
-        return objResult;
+//         objResult[strKey] = obj[strKey];
+//         return objResult;
 
-    }, {});
+//     }, {});
     
-    return objPickedOptions;
-}
+//     return objPickedOptions;
+// }
 
 const DEFAULTS = {
     SUBDOMAIN: 'system',
-    HOST: 'opasg2.com'
-};
+    HOST: 'opasg2.com',
+}
 
 const ENVIRONMENTS = {
-    qa3: 'codeengine.opasg2.com'
+    qa: `https://${DEFAULTS.SUBDOMAIN}.qa1.${DEFAULTS.HOST}`,
+    qa2: `https://${DEFAULTS.SUBDOMAIN}.qa2.${DEFAULTS.HOST}`,
+    qa3: `https://${DEFAULTS.SUBDOMAIN}.qa3.${DEFAULTS.HOST}`,
 }
 
 class Base {
