@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
+const axios = require('axios');
 
 // function pick(obj, arrToPick) {
 //     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
@@ -81,50 +82,140 @@ class Base {
         return hmac.digest('hex');
     }
 
-    request() {
-        console.log('In request');
+    generateOptions(params, pathIn, time, body, strResponseType = 'stream') {
+        const options = {
+            method: params.method.toLowerCase(),
+            port: parseInt(this.port, 10),
+            timeout: 900000,
+            baseURL: `${this.host}:${parseInt(this.port, 10)}`,
+            url: pathIn,
+            responseType: strResponseType,
+            headers: {
+                'User-Agent': `node/${process.version} ${process.platform} ${process.arch}`,
+                Authentication: `G2 ${time}:${this.generateHmac(time, params.method, pathIn, body)}`,
+            },
+        };
 
-        const body = JSON.stringify(this.args.body);
-        const time = Math.floor(Date.now()).toString();
-        const path = this.routePrefix + this.args.path;
+        options.headers['Content-Length'] = Buffer.byteLength(JSON.stringify(body));
+        options.headers['Content-Type'] = 'application/json';
+        options.data = body;
+        return options;
+    }
 
-        return new Promise((resolve, reject) => {
-            console.log(`Sending request to ${this.host}:${this.port}${path}`);
-            const request = this.getHttpPackage().request({
-                hostname: this.host,
-                port: parseInt(this.port),
-                path: path,
-                method: this.args.method,
-                headers: {
-                    'Content-Length': body ? Buffer.byteLength(body) : 0,
-                    'Content-Type': 'application/json',
-                    Authentication: `G2 ${time}:${this.generateHmac(time, this.args.method, path, this.args.body)}`
-                }
-            }, res => {
-                const arrStream = [];
+    request(params) {
+        const body = pickBy(get(this.args, 'body', {}), Boolean);
+        const time = Date.now().toString();
+        const fullUrl = this.routePrefix + this.args.path;
 
-                res.setEncoding('utf8');
-                res.on('data', (chunk) => {
-                    console.log(chunk);
-                    arrStream.push(chunk);
+        console.log(`\r\nSending request to ${this.host}:${this.port}${fullUrl}`);
+        console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}\r\n`);
+
+        return axios(this.generateOptions(this.args, fullUrl, time, body))
+            .then((response) => {
+                let arrChunks = [];
+                const arrResponse = [];
+
+                response.data.on('data', (objChunk) => {
+                    let strChunk = objChunk.toString();
+                    strChunk = strChunk.replace(/\n\n/g, '\n');
+                    let strSplitChunk = strChunk;
+                    if (strChunk.includes('\n')) {
+                        const arrLines = strChunk.split('\n');
+                        arrChunks.push(arrLines[0]);
+
+                        const strResponse = arrChunks.join('');
+                        arrResponse.push(strResponse);
+                        console.log(strResponse);
+
+                        arrChunks = [];
+
+                        if (arrLines.length > 1) {
+                            for (let intLoop = 1; intLoop < arrLines.length; intLoop += 1) {
+                                const strLine = arrLines[intLoop];
+                                if (intLoop === arrLines.length - 1) {
+                                    strSplitChunk = strLine;
+                                } else {
+                                    arrResponse.push(strLine);
+                                    console.log(strLine);
+                                }
+                            }
+                        }
+                    }
+
+                    arrChunks.push(strSplitChunk);
                 });
 
-                res.on('end', () => {
-                    console.log(`No more data in response. Exiting script.`);
-                    res.statusCode !== 200 || arrStream[arrStream.length - 1] === 'Upgrades partially ran' ? reject() : resolve();
-                });
-            });
+                response.data.on('end', () => {
+                    // if there are any chunks left over make sure we console log them
+                    if (arrChunks.length > 0) {
+                        arrChunks.forEach((strChunk) => {
+                            console.log(strChunk);
+                            arrResponse.push(strChunk);
+                        });
+                    }
 
-            request.on('error', (e) => {
-                console.error(`problem with request: ${e.message}`);
-                reject();
+                    const strError = arrResponse.pop();
+                    const intProcessExit = response.status !== 200 || (typeof strError === 'string' && strError.startsWith(ERROR_PREFIX)) ? 1 : 0;
+
+                    if (intProcessExit === 1) {
+                        console.error(`Error encountered ${strError.startsWith(ERROR_PREFIX) ? `: ${strError}` : ''}`);
+                    }
+
+                    console.log(`No more data in response. Exiting script with code ${intProcessExit}.`);
+                    console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
+                    process.exit(intProcessExit);
+                });
+            }).catch((objError) => {
+                console.error(`Problem with request: ${objError.message} `);
+                console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
                 process.exit(1);
             });
-
-            request.write(body);
-            request.end();
-        });
     }
+
+    // request() {
+    //     console.log('In request');
+
+    //     const body = JSON.stringify(this.args.body);
+    //     const time = Math.floor(Date.now()).toString();
+    //     const path = this.routePrefix + this.args.path;
+
+    //     return new Promise((resolve, reject) => {
+    //         console.log(`Sending request to ${this.host}:${this.port}${path}`);
+    //         const request = this.getHttpPackage().request({
+    //             hostname: this.host,
+    //             port: parseInt(this.port),
+    //             path: path,
+    //             method: this.args.method,
+    //             headers: {
+    //                 'Content-Length': body ? Buffer.byteLength(body) : 0,
+    //                 'Content-Type': 'application/json',
+    //                 Authentication: `G2 ${time}:${this.generateHmac(time, this.args.method, path, this.args.body)}`
+    //             }
+    //         }, res => {
+    //             const arrStream = [];
+
+    //             res.setEncoding('utf8');
+    //             res.on('data', (chunk) => {
+    //                 console.log(chunk);
+    //                 arrStream.push(chunk);
+    //             });
+
+    //             res.on('end', () => {
+    //                 console.log(`No more data in response. Exiting script.`);
+    //                 res.statusCode !== 200 || arrStream[arrStream.length - 1] === 'Upgrades partially ran' ? reject() : resolve();
+    //             });
+    //         });
+
+    //         request.on('error', (e) => {
+    //             console.error(`problem with request: ${e.message}`);
+    //             reject();
+    //             process.exit(1);
+    //         });
+
+    //         request.write(body);
+    //         request.end();
+    //     });
+    // }
 }
 
 function main() {
