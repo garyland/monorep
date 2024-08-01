@@ -8,29 +8,6 @@ const moment = require('moment');
 const get = require('lodash/get');
 const pickBy = require('lodash/pickBy');
 
-// function pick(obj, arrToPick) {
-//     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
-//         console.error('Invalid first parameter');
-//         process.exit(1);
-//     }
-    
-//     if (!Array.isArray(arrToPick) || arrToPick.length === 0) {
-//         return obj;
-//     }
-    
-//     const objPickedOptions = Object.keys(obj).reduce((objResult, strKey) => {
-//         if (!arrToPick.includes(strKey)) {
-//             return objResult;
-//         }
-    
-//         objResult[strKey] = obj[strKey];
-//         return objResult;
-
-//     }, {});
-    
-//     return objPickedOptions;
-// }
-
 const ERROR_PREFIX = 'ERR';
 
 const DEFAULTS = {
@@ -47,20 +24,11 @@ const ENVIRONMENTS = {
 
 class Base {
     constructor(args) {
-        // const { formattedArgs, options } = this.segregateArgs(args, argOptions);
         this.args = args;
-
-        console.log(JSON.stringify(this.args, null, 2));
-
         this.hmacKey = args.hmacKey || 'aX2i9vZAnNUrh4QVqpYe0BFYEHT3tQsC';
         this.host = ENVIRONMENTS[args.environment];
         this.port = args.port || (this.host !== ENVIRONMENTS.local ? 443 : 3080);
         this.routePrefix = args.routePrefix || '/rpc/v1/';
-
-        console.log('hmacKey', this.hmacKey);
-        console.log('host', this.host);
-        console.log('port', this.port);
-        console.log('routePrefix', this.routePrefix);
     }
 
     getHttpPackage() {
@@ -106,7 +74,6 @@ class Base {
         const fullUrl = this.routePrefix + this.args.path;
 
         console.log(`\r\nSending request to ${this.host}:${this.port}${fullUrl}`);
-        console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}\r\n`);
 
         return axios(this.generateOptions(this.args, fullUrl, time, body))
             .then((response) => {
@@ -161,6 +128,7 @@ class Base {
 
                     console.log(`No more data in response. Exiting script with code ${intProcessExit}.`);
                     console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
+                    console.log('');
                     process.exit(intProcessExit);
                 });
             }).catch((objError) => {
@@ -169,75 +137,22 @@ class Base {
                 process.exit(1);
             });
     }
-
-    // request() {
-    //     console.log('In request');
-
-    //     const body = JSON.stringify(this.args.body);
-    //     const time = Math.floor(Date.now()).toString();
-    //     const path = this.routePrefix + this.args.path;
-
-    //     return new Promise((resolve, reject) => {
-    //         console.log(`Sending request to ${this.host}:${this.port}${path}`);
-    //         const request = this.getHttpPackage().request({
-    //             hostname: this.host,
-    //             port: parseInt(this.port),
-    //             path: path,
-    //             method: this.args.method,
-    //             headers: {
-    //                 'Content-Length': body ? Buffer.byteLength(body) : 0,
-    //                 'Content-Type': 'application/json',
-    //                 Authentication: `G2 ${time}:${this.generateHmac(time, this.args.method, path, this.args.body)}`
-    //             }
-    //         }, res => {
-    //             const arrStream = [];
-
-    //             res.setEncoding('utf8');
-    //             res.on('data', (chunk) => {
-    //                 console.log(chunk);
-    //                 arrStream.push(chunk);
-    //             });
-
-    //             res.on('end', () => {
-    //                 console.log(`No more data in response. Exiting script.`);
-    //                 res.statusCode !== 200 || arrStream[arrStream.length - 1] === 'Upgrades partially ran' ? reject() : resolve();
-    //             });
-    //         });
-
-    //         request.on('error', (e) => {
-    //             console.error(`problem with request: ${e.message}`);
-    //             reject();
-    //             process.exit(1);
-    //         });
-
-    //         request.write(body);
-    //         request.end();
-    //     });
-    // }
 }
 
 function main() {
-    // const args = {
-    //     // hmacKey: 'sMo4wSSZ1c7aiSmm6YP7CEcIiayiuX6M',
-    //     environment: 'local',
-    //     // port: undefined,
-    //     routePrefix: '',
-    //     body: {},
-    //     path: 'communication/automatic',
-    //     method: 'POST'
-    // };
-    
-
     // Read arguments from passed in variables
     const args = {
         hmacKey: undefined,
         environment: undefined,
-        // port: undefined,
         routePrefix: '',
         body: {},
         path: undefined,
         method: undefined,
     };
+
+    console.log('');
+    console.log('*****************************');
+    console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}\r\n`);
 
     const arrMissingArguments = [];
 
@@ -268,6 +183,9 @@ function main() {
     if (arrMissingArguments.length > 0) {
         console.log('Following required parameters are missing: ');
         console.log(arrMissingArguments.join('; '));
+        console.log('');
+        console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
+        process.exit(1);
         return;
     }
 
