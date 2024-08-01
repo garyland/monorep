@@ -126,14 +126,17 @@ class Base {
                         console.error(`Error encountered ${strError.startsWith(ERROR_PREFIX) ? `: ${strError}` : ''}`);
                     }
 
+                    console.log('');
                     console.log(`No more data in response. Exiting script with code ${intProcessExit}.`);
                     console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
                     console.log('');
                     process.exit(intProcessExit);
                 });
             }).catch((objError) => {
+                console.log('');
                 console.error(`Problem with request: ${objError.message} `);
                 console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}`);
+                console.log('');
                 process.exit(1);
             });
     }
@@ -152,7 +155,7 @@ function main() {
 
     console.log('');
     console.log('*****************************');
-    console.log(`${moment().format('DD/MM/YYYY HH:mm:ss')}\r\n`);
+    console.log(moment().format('DD/MM/YYYY HH:mm:ss'));
 
     const arrMissingArguments = [];
 
@@ -181,6 +184,7 @@ function main() {
     }
 
     if (arrMissingArguments.length > 0) {
+        console.log('');
         console.log('Following required parameters are missing: ');
         console.log(arrMissingArguments.join('; '));
         console.log('');
