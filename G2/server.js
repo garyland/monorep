@@ -3,6 +3,10 @@ const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
 const axios = require('axios');
+const moment = require('moment');
+
+const get = require('lodash/get');
+const pickBy = require('lodash/pickBy');
 
 // function pick(obj, arrToPick) {
 //     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
@@ -27,6 +31,8 @@ const axios = require('axios');
 //     return objPickedOptions;
 // }
 
+const ERROR_PREFIX = 'ERR';
+
 const DEFAULTS = {
     SUBDOMAIN: 'system',
     HOST: 'opasg2.com',
@@ -36,6 +42,7 @@ const ENVIRONMENTS = {
     qa: `https://${DEFAULTS.SUBDOMAIN}.qa1.${DEFAULTS.HOST}`,
     qa2: `https://${DEFAULTS.SUBDOMAIN}.qa2.${DEFAULTS.HOST}`,
     qa3: `https://${DEFAULTS.SUBDOMAIN}.qa3.${DEFAULTS.HOST}`,
+    local: 'http://127.0.0.1',
 }
 
 class Base {
@@ -45,7 +52,7 @@ class Base {
 
         console.log(JSON.stringify(this.args, null, 2));
 
-        this.hmacKey = args.hmacKey || 'oZi6w7rDzNgV5qitMlPcqJwUP4rfTaJ3';
+        this.hmacKey = args.hmacKey || 'aX2i9vZAnNUrh4QVqpYe0BFYEHT3tQsC';
         this.host = ENVIRONMENTS[args.environment];
         this.port = args.port || (this.host !== ENVIRONMENTS.local ? 443 : 3080);
         this.routePrefix = args.routePrefix || '/rpc/v1/';
@@ -56,28 +63,19 @@ class Base {
         console.log('routePrefix', this.routePrefix);
     }
 
-    // segregateArgs(args, argOptions) {
-    //     return {
-    //         formattedArgs: pick(args, argOptions),
-    //         options: pick(args, ['hmacKey', 'environment', 'port', 'routePrefix'])
-    //     }
-    // }
-
     getHttpPackage() {
         return this.host === ENVIRONMENTS.local ? http : https;
     }
 
-    generateHmac(time, verb, path, body) {
+    generateHmac(time, verb, pathIn, body) {
         const hmac = crypto.createHmac('sha256', this.hmacKey);
         hmac.update(time);
         hmac.update(verb);
-        hmac.update(path);
+        hmac.update(pathIn);
 
-        if (Object.keys(body).length) {
-            const contentHash = crypto.createHash('md5');
-            contentHash.update(JSON.stringify(body));
-            hmac.update(contentHash.digest('hex'));
-        }
+        const contentHash = crypto.createHash('md5');
+        contentHash.update(JSON.stringify(body));
+        hmac.update(contentHash.digest('hex'));
 
         return hmac.digest('hex');
     }
@@ -219,6 +217,17 @@ class Base {
 }
 
 function main() {
+    // const args = {
+    //     // hmacKey: 'sMo4wSSZ1c7aiSmm6YP7CEcIiayiuX6M',
+    //     environment: 'local',
+    //     // port: undefined,
+    //     routePrefix: '',
+    //     body: {},
+    //     path: 'communication/automatic',
+    //     method: 'POST'
+    // };
+    
+
     // Read arguments from passed in variables
     const args = {
         hmacKey: undefined,
@@ -265,31 +274,5 @@ function main() {
 	const base = new Base(args);
 	return base.request();
 }
-
-
-// function main(params) {
-//     console.log('');
-//     console.log('*********************************************************');
-//     console.log('');
-//     console.log('Hello')
-//     console.log('Test');
-//     console.log('This is on the test branch')
-
-//     console.log('');
-//     console.log('PARAMS');
-//     console.log(JSON.stringify(params, null, 2));
-
-//     console.log('');
-//     console.log('ENV');
-//     console.log(JSON.stringify(process.env, null, 2));
-
-//     console.log('');
-//     console.log('*********************************************************');
-//     console.log('');
-
-//     // const base = new Base(params, params.pickArguments);
-// 	// return base.request(pick(params, ['body', 'path', 'method']));
-
-// }
 
 main();
