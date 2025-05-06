@@ -20,6 +20,7 @@ const ENVIRONMENTS = {
     qa2: `https://${DEFAULTS.SUBDOMAIN}.qa2.${DEFAULTS.HOST}`,
     qa3: `https://${DEFAULTS.SUBDOMAIN}.qa3.${DEFAULTS.HOST}`,
     local: 'http://127.0.0.1',
+    test: 'http://test.local',
 }
 
 class Base {
